@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         option.textContent = `${dataset.name} (Uploaded: ${dataset.uploadDate})`;
         datasetSelect.appendChild(option);
 
-        if (index === 0) loadDataset(dataset.file);
+        if (index === 0) loadDataset(dataset.file); // Load the first dataset by default
     });
 
     datasetSelect.addEventListener("change", (event) => {
@@ -42,7 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const rows = csvText.split("\n").map(row => row.split(","));
                 currentHeaders = rows.shift(); // Save headers
                 tableData = rows; // Save table data
-                renderTable(currentHeaders, tableData); // Render the full table on load
+
+                // Render the full table without highlights
+                renderTable(currentHeaders, tableData);
             })
             .catch(err => console.error("Error loading CSV:", err));
     }
@@ -55,12 +57,12 @@ document.addEventListener("DOMContentLoaded", () => {
             tableHeaders.appendChild(th);
         });
 
-        renderTableBodyWithHighlight(rows, ""); // Render the table without highlighting initially
+        renderTableBodyWithHighlight(rows, ""); // Render all rows without highlighting initially
     }
 
     function filterTable(query) {
         if (!query) {
-            // If the filter is empty, render the full table without highlights
+            // If no query, render the full dataset without highlighting
             renderTableBodyWithHighlight(tableData, "");
             return;
         }
@@ -70,7 +72,8 @@ document.addEventListener("DOMContentLoaded", () => {
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
 
-        renderTableBodyWithHighlight(filteredRows, query); // Pass the query for highlighting
+        // Render the filtered rows with highlights
+        renderTableBodyWithHighlight(filteredRows, query);
     }
 
     function renderTableBodyWithHighlight(rows, query) {
@@ -81,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
             row.forEach(cell => {
                 const td = document.createElement("td");
 
-                // Highlight cells containing the query (case insensitive)
+                // If query exists and the cell matches, highlight it
                 if (query && cell.toLowerCase().includes(query.toLowerCase())) {
                     td.style.backgroundColor = "yellow"; // Highlight the cell with yellow
                 }
