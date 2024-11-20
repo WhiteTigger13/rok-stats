@@ -58,25 +58,12 @@ document.addEventListener("DOMContentLoaded", () => {
         renderTableBody(rows);
     }
 
-    function renderTableBody(rows) {
-        tableBody.innerHTML = ""; // Clear the table body before rendering
-        rows.forEach(row => {
-            const tr = document.createElement("tr");
-            row.forEach(cell => {
-                const td = document.createElement("td");
-                td.textContent = cell.trim();
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr); // Add the visible row to the table body
-        });
-    }
-
     function filterTable(query) {
         const filteredRows = tableData.filter(row =>
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
 
-        renderTableBodyWithHighlight(filteredRows, query);
+        renderTableBodyWithHighlight(filteredRows, query.toLowerCase()); // Pass the query as lowercase
     }
 
     function renderTableBodyWithHighlight(rows, query) {
@@ -87,12 +74,17 @@ document.addEventListener("DOMContentLoaded", () => {
             row.forEach(cell => {
                 const td = document.createElement("td");
 
-                // Check if the cell contains the filter query (case insensitive)
-                if (query && cell.toLowerCase().includes(query.toLowerCase())) {
-                    td.style.backgroundColor = "yellow"; // Highlight with yellow
+                // Highlight cells containing the query (case insensitive)
+                if (query && cell.toLowerCase().includes(query)) {
+                    const startIndex = cell.toLowerCase().indexOf(query);
+                    const endIndex = startIndex + query.length;
+
+                    // Wrap the matched part in a <span> for highlighting
+                    td.innerHTML = `${cell.slice(0, startIndex)}<span style="background-color: yellow;">${cell.slice(startIndex, endIndex)}</span>${cell.slice(endIndex)}`;
+                } else {
+                    td.textContent = cell.trim();
                 }
 
-                td.textContent = cell.trim();
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr); // Add the visible row to the table body
