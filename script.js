@@ -8,23 +8,61 @@ document.addEventListener("DOMContentLoaded", () => {
     let tableData = []; // Store the currently loaded table data
     let currentHeaders = []; // Store the headers
 
-    const datasets = [
-        { name: "Dataset 1", file: "data/dataset1.csv", uploadDate: "2024-11-20" },
-        { name: "Dataset 2", file: "data/dataset2.csv", uploadDate: "2024-11-20" }
-       
-    ];
+    const repoOwner = "WhiteTigger13"; // Your GitHub username
+    const repoName = "rok-stats"; // Your GitHub repository name
+    const branchName = "main"; // Your repository's branch name
 
-    // Populate dropdown menu with datasets
-    datasets.forEach((dataset, index) => {
-        const option = document.createElement("option");
-        option.value = dataset.file;
-        option.textContent = `${dataset.name} (Uploaded: ${dataset.uploadDate})`;
-        datasetSelect.appendChild(option);
+    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/data?ref=${branchName}`;
 
-        if (index === 0) loadDataset(dataset.file); // Load the first dataset on page load
-    });
+    // Fetch available files from the GitHub repository
+    function fetchAvailableFiles() {
+        fetch(githubApiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(files => {
+                const csvFiles = files.filter(file => file.name.endsWith(".csv"));
+                console.log("CSV Files:", csvFiles); // Debugging
+                populateDropdown(csvFiles);
+            })
+            .catch(err => console.error("Error fetching file list:", err));
+    }
 
-    // Event listeners
+    // Populate the dropdown with file names
+    function populateDropdown(files) {
+        datasetSelect.innerHTML = ""; // Clear existing options
+        files.forEach(file => {
+            const option = document.createElement("option");
+            option.value = file.download_url; // Use the direct download URL
+            option.textContent = file.name; // Use the file name as the display name
+            datasetSelect.appendChild(option);
+        });
+
+        // Automatically load the first file if available
+        if (files.length > 0) {
+            loadDataset(files[0].download_url);
+        }
+    }
+
+    // Load dataset from CSV and render table
+    function loadDataset(fileUrl) {
+        console.log("Loading dataset:", fileUrl); // Debugging
+
+        fetch(fileUrl)
+            .then(response => response.text())
+            .then(csvText => {
+                const rows = csvText.split("\n").map(row => row.split(","));
+                currentHeaders = rows.shift(); // Extract headers
+                tableData = rows; // Store table data
+                console.log("Loaded Data:", tableData); // Debugging
+                renderTable(currentHeaders, tableData); // Render the table with all data
+            })
+            .catch(err => console.error("Error loading dataset:", err));
+    }
+
     datasetSelect.addEventListener("change", (event) => {
         const selectedFile = event.target.value;
         loadDataset(selectedFile);
@@ -37,20 +75,6 @@ document.addEventListener("DOMContentLoaded", () => {
     downloadButton.addEventListener("click", () => {
         downloadTableAsExcel();
     });
-
-    // Load dataset from CSV and render table
-    function loadDataset(file) {
-        fetch(file)
-            .then(response => response.text())
-            .then(csvText => {
-                const rows = csvText.split("\n").map(row => row.split(","));
-                currentHeaders = rows.shift(); // Extract headers
-                tableData = rows; // Store table data
-                console.log("Loaded Data:", tableData); // Debugging
-                renderTable(currentHeaders, tableData); // Render the table with all data
-            })
-            .catch(err => console.error("Error loading dataset:", err));
-    }
 
     // Render the table with headers and rows
     function renderTable(headers, rows) {
@@ -150,4 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
         link.download = "filtered_table_data.csv";
         link.click();
     }
+
+    // Fetch and populate the dropdown on page load
+    fetchAvailableFiles();
 });
