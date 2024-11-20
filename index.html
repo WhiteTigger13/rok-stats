@@ -1,51 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1599 ROK Stats</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .tab {
-            display: none;
-        }
-
-        .tab.active {
-            display: block;
-        }
-
-        .tabs-menu button {
-            margin-right: 10px;
-        }
-    </style>
-</head>
 <body>
-    <h1>Rise of Kingdoms Stats</h1>
+    <h1>1599 ROK Stats</h1>
 
-    <!-- Tabs menu -->
+    <!-- Tabs Menu -->
     <div class="tabs-menu">
         <button onclick="showTab('tab1')">Dataset Viewer</button>
         <button onclick="showTab('tab2')">Stats Differences</button>
     </div>
 
-    <!-- First tab: Dataset Viewer -->
+    <!-- Tab 1: Dataset Viewer -->
     <div id="tab1" class="tab active">
-        <!-- Dropdown to select dataset -->
+        <!-- Existing Dataset Viewer Content -->
         <div>
             <label for="dataset-select">Choose Dataset:</label>
             <select id="dataset-select"></select>
         </div>
-
-        <!-- Search bar for filtering -->
         <div>
             <label for="table-filter">Filter Table:</label>
             <input type="text" id="table-filter" placeholder="Type to search..." />
         </div>
-        <!-- Download button -->
         <div>
             <button id="download-button">Download Selection as Excel</button>
         </div>
-        <!-- Table container -->
         <div id="table-container">
             <table id="stats-table">
                 <thead>
@@ -56,7 +31,7 @@
         </div>
     </div>
 
-    <!-- Second tab: Stats Differences -->
+    <!-- Tab 2: Stats Differences -->
     <div id="tab2" class="tab">
         <h2>Stats Differences</h2>
         <button onclick="calculateStatsDifferences()">Calculate Differences</button>
@@ -65,4 +40,3 @@
 
     <script src="script.js"></script>
 </body>
-</html>
