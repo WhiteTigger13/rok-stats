@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Render table body with optional highlighting
+    // Render table body with optional highlighting and formatting
     function renderTableBody(rows, query) {
         tableBody.innerHTML = ""; // Clear existing rows
 
@@ -81,10 +81,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Highlight matching cells
                 if (query && formattedCell.toLowerCase().includes(query.toLowerCase())) {
-                    td.style.backgroundColor = "yellow"; // Highlight the cell with yellow
+                    td.innerHTML = `<span style="background-color: yellow;">${formattedCell}</span>`;
+                } else {
+                    td.innerHTML = formattedCell;
                 }
 
-                td.textContent = formattedCell;
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr);
