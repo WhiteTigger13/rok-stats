@@ -82,4 +82,52 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderTableBodyWithHighlight(rows, query) {
         tableBody.innerHTML = ""; // Clear the table body before rendering
 
-        rows.forEach
+        rows.forEach(row => {
+            const tr = document.createElement("tr");
+            row.forEach(cell => {
+                const td = document.createElement("td");
+
+                // Check if the cell contains the filter query (case insensitive)
+                if (query && cell.toLowerCase().includes(query.toLowerCase())) {
+                    td.style.backgroundColor = "yellow"; // Highlight with yellow
+                }
+
+                td.textContent = cell.trim();
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr); // Add the visible row to the table body
+        });
+    }
+
+    function downloadTableAsExcel() {
+        const rows = []; // To store the filtered table rows
+
+        // Add headers as the first row
+        const headers = Array.from(tableHeaders.children).map(th => th.textContent);
+        rows.push(headers);
+
+        // Add visible rows (those in the DOM) to the rows array
+        const visibleRows = Array.from(tableBody.querySelectorAll("tr")); // Select only visible rows
+        visibleRows.forEach(tr => {
+            const row = Array.from(tr.children).map(td => td.textContent);
+            rows.push(row);
+        });
+
+        // Convert the rows array to CSV format
+        const csvContent = rows.map(row => row.join(",")).join("\n");
+
+        // Create a Blob object for the CSV data
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
+        // Create a temporary link element
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "filtered_table_data.csv");
+        document.body.appendChild(link);
+
+        // Trigger the download and remove the link
+        link.click();
+        document.body.removeChild(link);
+    }
+});
