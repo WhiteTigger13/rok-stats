@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderTableBody(rows) {
-        tableBody.innerHTML = "";
+        tableBody.innerHTML = ""; // Clear the table body before rendering
         rows.forEach(row => {
             const tr = document.createElement("tr");
             row.forEach(cell => {
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 td.textContent = cell.trim();
                 tr.appendChild(td);
             });
-            tableBody.appendChild(tr);
+            tableBody.appendChild(tr); // Add the visible row to the table body
         });
     }
 
@@ -85,8 +85,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const headers = Array.from(tableHeaders.children).map(th => th.textContent);
         rows.push(headers);
 
-        // Add visible rows (only those currently in the DOM) to the rows array
-        const visibleRows = Array.from(tableBody.querySelectorAll("tr")); // Get only rendered rows
+        // Add visible rows (those in the DOM) to the rows array
+        const visibleRows = Array.from(tableBody.querySelectorAll("tr")); // Select only visible rows
         visibleRows.forEach(tr => {
             const row = Array.from(tr.children).map(td => td.textContent);
             rows.push(row);
