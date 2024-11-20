@@ -3,17 +3,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableHeaders = document.getElementById("table-headers");
     const tableBody = document.getElementById("table-body");
 
-    // List of available datasets with upload dates
+    // List of available datasets
     const datasets = [
-        { name: "Dataset 1", file: "data/dataset1.csv", uploadDate: "2024-11-20" },
-        { name: "Dataset 2", file: "data/dataset2.csv", uploadDate: "2024-11-21" }
+        { name: "Dataset 1", file: "data/dataset1.csv" },
+        { name: "Dataset 2", file: "data/dataset2.csv" }
     ];
+
+    // Generate upload date dynamically
+    const today = new Date();
+    const formattedDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
     // Populate dataset selector
     datasets.forEach((dataset, index) => {
         const option = document.createElement("option");
         option.value = dataset.file;
-        option.textContent = `${dataset.name} (Uploaded: ${dataset.uploadDate})`;
+        option.textContent = `${dataset.name} (Uploaded: ${formattedDate})`;
         datasetSelect.appendChild(option);
 
         // Load the first dataset by default
@@ -47,11 +51,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Add rows
                 rows.forEach(row => {
                     const tr = document.createElement("tr");
-                    row.forEach(cell => {
+                    row.forEach((cell, columnIndex) => {
                         const td = document.createElement("td");
 
-                        // Format numbers
-                        const formattedCell = formatNumber(cell.trim());
+                        // Format numbers except for the Governor ID column
+                        const columnName = headers[columnIndex].trim();
+                        const formattedCell =
+                            columnName === "Governor ID" ? cell.trim() : formatNumber(cell.trim());
+                        
                         td.textContent = formattedCell;
                         tr.appendChild(td);
                     });
@@ -65,8 +72,4 @@ document.addEventListener("DOMContentLoaded", () => {
     function formatNumber(value) {
         // Check if the value is a number
         if (!isNaN(value) && value !== "") {
-            return parseInt(value, 10).toLocaleString("de-DE"); // German format uses "." as thousand separator
-        }
-        return value; // Return original value if it's not a number
-    }
-});
+            return parseInt(value, 10).toLocaleString("de-DE"); // German format uses "." 
