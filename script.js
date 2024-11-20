@@ -5,8 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableBody = document.getElementById("table-body");
     const downloadButton = document.getElementById("download-button");
 
-    let tableData = []; // To store the currently loaded table data
-    let currentHeaders = []; // To store the headers
+    let tableData = []; // Store the currently loaded table data
+    let currentHeaders = []; // Store the headers
 
     const datasets = [
         { name: "Dataset 1", file: "data/dataset1.csv", uploadDate: "2024-11-20" },
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Render the table with headers and rows
     function renderTable(headers, rows) {
         renderTableHeaders(headers);
-        renderTableBody(rows); // Show all rows on initial load
+        renderTableBody(rows, ""); // Show all rows on initial load
     }
 
     // Render table headers
@@ -66,25 +66,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Render table body
-    function renderTableBody(rows) {
+    // Render table body with optional highlighting
+    function renderTableBody(rows, query) {
         tableBody.innerHTML = ""; // Clear existing rows
+
         rows.forEach(row => {
             const tr = document.createElement("tr");
-            row.forEach(cell => {
+            row.forEach((cell, index) => {
                 const td = document.createElement("td");
-                td.textContent = cell.trim();
+                const columnName = currentHeaders[index].trim();
+
+                // Apply number formatting if the column contains numeric data
+                const formattedCell = formatNumberIfNeeded(cell.trim(), columnName);
+
+                // Highlight matching cells
+                if (query && formattedCell.toLowerCase().includes(query.toLowerCase())) {
+                    td.style.backgroundColor = "yellow"; // Highlight the cell with yellow
+                }
+
+                td.textContent = formattedCell;
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr);
         });
     }
 
-    // Filter and highlight matching rows
+    // Apply filter and render the table with highlights
     function filterTable(query) {
         if (!query) {
             // If no query, render the full dataset without highlights
-            renderTableBody(tableData);
+            renderTableBody(tableData, "");
             return;
         }
 
@@ -93,33 +104,16 @@ document.addEventListener("DOMContentLoaded", () => {
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
 
-        renderTableBodyWithHighlight(filteredRows, query); // Highlight matches
+        renderTableBody(filteredRows, query); // Highlight matches
     }
 
-    // Render table body with highlighted cells
-    function renderTableBodyWithHighlight(rows, query) {
-        tableBody.innerHTML = ""; // Clear existing rows
-
-        rows.forEach(row => {
-            const tr = document.createElement("tr");
-            row.forEach(cell => {
-                const td = document.createElement("td");
-
-                // Highlight cells containing the query
-                if (query && cell.toLowerCase().includes(query.toLowerCase())) {
-                    const startIndex = cell.toLowerCase().indexOf(query.toLowerCase());
-                    const endIndex = startIndex + query.length;
-
-                    // Highlight matching portion
-                    td.innerHTML = `${cell.slice(0, startIndex)}<span style="background-color: yellow;">${cell.slice(startIndex, endIndex)}</span>${cell.slice(endIndex)}`;
-                } else {
-                    td.textContent = cell.trim();
-                }
-
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
-        });
+    // Format numbers with thousand separators if applicable
+    function formatNumberIfNeeded(value, columnName) {
+        if (!isNaN(value) && value !== "" && columnName !== "Governor ID") {
+            // Apply thousand separators for numeric columns
+            return parseInt(value, 10).toLocaleString("de-DE");
+        }
+        return value; // Return original value for non-numeric columns
     }
 
     // Download the visible table as CSV
