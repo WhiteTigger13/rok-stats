@@ -49,12 +49,24 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tr = document.createElement("tr");
                     row.forEach(cell => {
                         const td = document.createElement("td");
-                        td.textContent = cell.trim(); // Trim to remove unnecessary spaces
+
+                        // Format numbers
+                        const formattedCell = formatNumber(cell.trim());
+                        td.textContent = formattedCell;
                         tr.appendChild(td);
                     });
                     tableBody.appendChild(tr);
                 });
             })
             .catch(err => console.error("Error loading CSV:", err));
+    }
+
+    // Function to format numbers with thousand separators
+    function formatNumber(value) {
+        // Check if the value is a number
+        if (!isNaN(value) && value !== "") {
+            return parseInt(value, 10).toLocaleString("de-DE"); // German format uses "." as thousand separator
+        }
+        return value; // Return original value if it's not a number
     }
 });
