@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
 
-        renderTableBodyWithHighlight(filteredRows, query.toLowerCase()); // Pass the query as lowercase
+        renderTableBodyWithHighlight(filteredRows, query); // Pass the query for highlighting
     }
 
     function renderTableBodyWithHighlight(rows, query) {
@@ -74,20 +74,15 @@ document.addEventListener("DOMContentLoaded", () => {
             row.forEach(cell => {
                 const td = document.createElement("td");
 
-                // Highlight cells containing the query (case insensitive)
-                if (query && cell.toLowerCase().includes(query)) {
-                    const startIndex = cell.toLowerCase().indexOf(query);
-                    const endIndex = startIndex + query.length;
-
-                    // Wrap the matched part in a <span> for highlighting
-                    td.innerHTML = `${cell.slice(0, startIndex)}<span style="background-color: yellow;">${cell.slice(startIndex, endIndex)}</span>${cell.slice(endIndex)}`;
-                } else {
-                    td.textContent = cell.trim();
+                // Check if the cell contains the filter query
+                if (query && cell.toLowerCase().includes(query.toLowerCase())) {
+                    td.style.backgroundColor = "yellow"; // Highlight the cell with yellow
                 }
 
+                td.textContent = cell.trim();
                 tr.appendChild(td);
             });
-            tableBody.appendChild(tr); // Add the visible row to the table body
+            tableBody.appendChild(tr); // Add the row to the table body
         });
     }
 
