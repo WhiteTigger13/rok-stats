@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const rows = csvText.split("\n").map(row => row.split(","));
                 currentHeaders = rows.shift(); // Save headers
                 tableData = rows; // Save table data
-                renderTable(currentHeaders, rows);
+                renderTable(currentHeaders, tableData); // Render the full table on load
             })
             .catch(err => console.error("Error loading CSV:", err));
     }
@@ -55,10 +55,17 @@ document.addEventListener("DOMContentLoaded", () => {
             tableHeaders.appendChild(th);
         });
 
-        renderTableBody(rows);
+        renderTableBodyWithHighlight(rows, ""); // Render the table without highlighting initially
     }
 
     function filterTable(query) {
+        if (!query) {
+            // If the filter is empty, render the full table without highlights
+            renderTableBodyWithHighlight(tableData, "");
+            return;
+        }
+
+        // Filter rows based on the query
         const filteredRows = tableData.filter(row =>
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
@@ -74,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
             row.forEach(cell => {
                 const td = document.createElement("td");
 
-                // Check if the cell contains the filter query
+                // Highlight cells containing the query (case insensitive)
                 if (query && cell.toLowerCase().includes(query.toLowerCase())) {
                     td.style.backgroundColor = "yellow"; // Highlight the cell with yellow
                 }
