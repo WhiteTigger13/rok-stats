@@ -3,17 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableHeaders = document.getElementById("table-headers");
     const tableBody = document.getElementById("table-body");
 
-    // List of available datasets
+    // List of available datasets with upload dates
     const datasets = [
-        { name: "Dataset 1", file: "data/dataset1.csv" },
-        { name: "Dataset 2", file: "data/dataset2.csv" }
+        { name: "Dataset 1", file: "data/dataset1.csv", uploadDate: "2024-11-20" },
+        { name: "Dataset 2", file: "data/dataset2.csv", uploadDate: "2024-11-21" }
     ];
 
     // Populate dataset selector
     datasets.forEach((dataset, index) => {
         const option = document.createElement("option");
         option.value = dataset.file;
-        option.textContent = dataset.name;
+        option.textContent = `${dataset.name} (Uploaded: ${dataset.uploadDate})`;
         datasetSelect.appendChild(option);
 
         // Load the first dataset by default
