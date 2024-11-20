@@ -13,15 +13,17 @@ document.addEventListener("DOMContentLoaded", () => {
         { name: "Dataset 2", file: "data/dataset2.csv", uploadDate: "2024-11-21" }
     ];
 
+    // Populate dropdown menu with datasets
     datasets.forEach((dataset, index) => {
         const option = document.createElement("option");
         option.value = dataset.file;
         option.textContent = `${dataset.name} (Uploaded: ${dataset.uploadDate})`;
         datasetSelect.appendChild(option);
 
-        if (index === 0) loadDataset(dataset.file); // Load the first dataset by default
+        if (index === 0) loadDataset(dataset.file); // Load the first dataset on page load
     });
 
+    // Event listeners
     datasetSelect.addEventListener("change", (event) => {
         const selectedFile = event.target.value;
         loadDataset(selectedFile);
@@ -35,96 +37,114 @@ document.addEventListener("DOMContentLoaded", () => {
         downloadTableAsExcel();
     });
 
+    // Load dataset from CSV and render table
     function loadDataset(file) {
         fetch(file)
             .then(response => response.text())
             .then(csvText => {
                 const rows = csvText.split("\n").map(row => row.split(","));
-                currentHeaders = rows.shift(); // Save headers
-                tableData = rows; // Save table data
-
-                // Render the full table without highlights
-                renderTable(currentHeaders, tableData);
+                currentHeaders = rows.shift(); // Extract headers
+                tableData = rows; // Store table data
+                renderTable(currentHeaders, tableData); // Render the table with all data
             })
-            .catch(err => console.error("Error loading CSV:", err));
+            .catch(err => console.error("Error loading dataset:", err));
     }
 
+    // Render the table with headers and rows
     function renderTable(headers, rows) {
-        tableHeaders.innerHTML = "";
+        renderTableHeaders(headers);
+        renderTableBody(rows); // Show all rows on initial load
+    }
+
+    // Render table headers
+    function renderTableHeaders(headers) {
+        tableHeaders.innerHTML = ""; // Clear existing headers
         headers.forEach(header => {
             const th = document.createElement("th");
             th.textContent = header.trim();
             tableHeaders.appendChild(th);
         });
-
-        renderTableBodyWithHighlight(rows, ""); // Render all rows without highlighting initially
     }
 
+    // Render table body
+    function renderTableBody(rows) {
+        tableBody.innerHTML = ""; // Clear existing rows
+        rows.forEach(row => {
+            const tr = document.createElement("tr");
+            row.forEach(cell => {
+                const td = document.createElement("td");
+                td.textContent = cell.trim();
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Filter and highlight matching rows
     function filterTable(query) {
         if (!query) {
-            // If no query, render the full dataset without highlighting
-            renderTableBodyWithHighlight(tableData, "");
+            // If no query, render the full dataset without highlights
+            renderTableBody(tableData);
             return;
         }
 
-        // Filter rows based on the query
+        // Filter rows based on query
         const filteredRows = tableData.filter(row =>
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
 
-        // Render the filtered rows with highlights
-        renderTableBodyWithHighlight(filteredRows, query);
+        renderTableBodyWithHighlight(filteredRows, query); // Highlight matches
     }
 
+    // Render table body with highlighted cells
     function renderTableBodyWithHighlight(rows, query) {
-        tableBody.innerHTML = ""; // Clear the table body before rendering
+        tableBody.innerHTML = ""; // Clear existing rows
 
         rows.forEach(row => {
             const tr = document.createElement("tr");
             row.forEach(cell => {
                 const td = document.createElement("td");
 
-                // If query exists and the cell matches, highlight it
+                // Highlight cells containing the query
                 if (query && cell.toLowerCase().includes(query.toLowerCase())) {
-                    td.style.backgroundColor = "yellow"; // Highlight the cell with yellow
+                    const startIndex = cell.toLowerCase().indexOf(query.toLowerCase());
+                    const endIndex = startIndex + query.length;
+
+                    // Highlight matching portion
+                    td.innerHTML = `${cell.slice(0, startIndex)}<span style="background-color: yellow;">${cell.slice(startIndex, endIndex)}</span>${cell.slice(endIndex)}`;
+                } else {
+                    td.textContent = cell.trim();
                 }
 
-                td.textContent = cell.trim();
                 tr.appendChild(td);
             });
-            tableBody.appendChild(tr); // Add the row to the table body
+            tableBody.appendChild(tr);
         });
     }
 
+    // Download the visible table as CSV
     function downloadTableAsExcel() {
-        const rows = []; // To store the filtered table rows
+        const rows = []; // Collect rows to export
 
         // Add headers as the first row
         const headers = Array.from(tableHeaders.children).map(th => th.textContent);
         rows.push(headers);
 
-        // Add visible rows (those in the DOM) to the rows array
-        const visibleRows = Array.from(tableBody.querySelectorAll("tr")); // Select only visible rows
+        // Add visible rows (those currently in the DOM)
+        const visibleRows = Array.from(tableBody.querySelectorAll("tr"));
         visibleRows.forEach(tr => {
             const row = Array.from(tr.children).map(td => td.textContent);
             rows.push(row);
         });
 
-        // Convert the rows array to CSV format
+        // Convert rows to CSV format
         const csvContent = rows.map(row => row.join(",")).join("\n");
 
-        // Create a Blob object for the CSV data
+        // Create and download CSV file
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-        // Create a temporary link element
         const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "filtered_table_data.csv");
-        document.body.appendChild(link);
-
-        // Trigger the download and remove the link
+        link.href = URL.createObjectURL(blob);
+        link.download = "filtered_table_data.csv";
         link.click();
-        document.body.removeChild(link);
     }
 });
