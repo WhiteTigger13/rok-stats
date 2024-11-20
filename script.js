@@ -4,9 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableHeaders = document.getElementById("table-headers");
     const tableBody = document.getElementById("table-body");
     const downloadButton = document.getElementById("download-button");
+    const statsDifferencesContainer = document.getElementById("stats-differences");
 
     let tableData = []; // Store the currently loaded table data
     let currentHeaders = []; // Store the headers
+    const governorStats = {}; // Store aggregated governor data
 
     const repoOwner = "WhiteTigger13"; // Your GitHub username
     const repoName = "rok-stats"; // Your GitHub repository name
@@ -59,6 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 tableData = rows; // Store table data
                 console.log("Loaded Data:", tableData); // Debugging
                 renderTable(currentHeaders, tableData); // Render the table with all data
+                aggregateGovernorStats(fileUrl, rows); // Aggregate data for stats differences
             })
             .catch(err => console.error("Error loading dataset:", err));
     }
@@ -118,6 +121,59 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             tableBody.appendChild(tr);
         });
+    }
+
+    // Aggregate data for governor stats
+    function aggregateGovernorStats(fileUrl, rows) {
+        rows.forEach(row => {
+            const governorName = row[currentHeaders.indexOf("Governor Name")]?.trim();
+            if (!governorName) return;
+
+            if (!governorStats[governorName]) {
+                governorStats[governorName] = [];
+            }
+
+            const power = parseInt(row[currentHeaders.indexOf("Power")] || "0", 10);
+            const killPoints = parseInt(row[currentHeaders.indexOf("Kill Points")] || "0", 10);
+            const deaths = parseInt(row[currentHeaders.indexOf("Deaths")] || "0", 10);
+
+            governorStats[governorName].push({ file: fileUrl, power, killPoints, deaths });
+        });
+
+        console.log("Aggregated Governor Stats:", governorStats); // Debugging
+    }
+
+    // Calculate stats differences for governors
+    function calculateStatsDifferences() {
+        statsDifferencesContainer.innerHTML = ""; // Clear previous results
+
+        Object.keys(governorStats).forEach(governorName => {
+            const stats = governorStats[governorName];
+            if (stats.length < 2) return; // Skip if there's not enough data for comparison
+
+            const latest = stats[stats.length - 1];
+            const previous = stats[stats.length - 2];
+
+            const powerChange = latest.power - previous.power;
+            const killPointsChange = latest.killPoints - previous.killPoints;
+            const deathsChange = latest.deaths - previous.deaths;
+
+            const differenceElement = document.createElement("div");
+            differenceElement.innerHTML = `
+                <h4>${governorName}</h4>
+                <p>Power Change: ${powerChange > 0 ? "+" : ""}${powerChange}</p>
+                <p>Kill Points Change: ${killPointsChange > 0 ? "+" : ""}${killPointsChange}</p>
+                <p>Deaths Change: ${deathsChange > 0 ? "+" : ""}${deathsChange}</p>
+            `;
+            statsDifferencesContainer.appendChild(differenceElement);
+        });
+    }
+
+    // Tab switching logic
+    function showTab(tabId) {
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
     }
 
     // Apply filter and render the table with highlights
