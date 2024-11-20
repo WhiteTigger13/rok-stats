@@ -85,8 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const headers = Array.from(tableHeaders.children).map(th => th.textContent);
         rows.push(headers);
 
-        // Add visible rows (filtered data) to the rows array
-        Array.from(tableBody.children).forEach(tr => {
+        // Add visible rows (only those currently in the DOM) to the rows array
+        const visibleRows = Array.from(tableBody.querySelectorAll("tr")); // Get only rendered rows
+        visibleRows.forEach(tr => {
             const row = Array.from(tr.children).map(td => td.textContent);
             rows.push(row);
         });
