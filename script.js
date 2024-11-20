@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Add headers
                 headers.forEach(header => {
                     const th = document.createElement("th");
-                    th.textContent = header;
+                    th.textContent = header.trim(); // Trim to remove unnecessary spaces
                     tableHeaders.appendChild(th);
                 });
 
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const tr = document.createElement("tr");
                     row.forEach(cell => {
                         const td = document.createElement("td");
-                        td.textContent = cell;
+                        td.textContent = cell.trim(); // Trim to remove unnecessary spaces
                         tr.appendChild(td);
                     });
                     tableBody.appendChild(tr);
