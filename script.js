@@ -3,8 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("table-filter");
     const tableHeaders = document.getElementById("table-headers");
     const tableBody = document.getElementById("table-body");
+    const downloadButton = document.getElementById("download-button");
 
     let tableData = []; // To store the currently loaded table data
+    let currentHeaders = []; // To store the headers
     let currentSortColumn = null; // To track the column being sorted
     let sortAscending = true; // Sorting direction
 
@@ -31,6 +33,10 @@ document.addEventListener("DOMContentLoaded", () => {
         filterTable(event.target.value);
     });
 
+    downloadButton.addEventListener("click", () => {
+        downloadTableAsExcel();
+    });
+
     function loadDataset(file) {
         fetch(file)
             .then(response => response.text())
@@ -40,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Save the data
                 tableData = rows;
+                currentHeaders = headers;
 
                 renderTable(headers, rows);
             })
@@ -67,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const tr = document.createElement("tr");
             row.forEach((cell, columnIndex) => {
                 const td = document.createElement("td");
-                const columnName = tableHeaders.children[columnIndex].textContent.trim();
+                const columnName = currentHeaders[columnIndex].trim();
                 const formattedCell =
                     columnName === "Governor ID" ? cell.trim() : formatNumber(cell.trim());
                 td.textContent = formattedCell;
@@ -108,5 +115,25 @@ document.addEventListener("DOMContentLoaded", () => {
             return parseInt(value, 10).toLocaleString("de-DE");
         }
         return value;
+    }
+
+    // Function to download the table as an Excel file
+    function downloadTableAsExcel() {
+        const rows = [currentHeaders, ...tableData];
+        const csvContent = rows.map(row => row.join(",")).join("\n");
+
+        // Create a Blob object for the CSV data
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
+        // Create a temporary link element
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "table_data.csv");
+        document.body.appendChild(link);
+
+        // Trigger download and remove the link
+        link.click();
+        document.body.removeChild(link);
     }
 });
