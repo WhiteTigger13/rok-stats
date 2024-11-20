@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const datasets = [
         { name: "Dataset 1", file: "data/dataset1.csv", uploadDate: "2024-11-20" },
         { name: "Dataset 2", file: "data/dataset2.csv", uploadDate: "2024-11-20" }
-         { name: "Dataset 3", file: "data/dataset3a.csv", uploadDate: "2024-11-20" }
+       
     ];
 
     // Populate dropdown menu with datasets
