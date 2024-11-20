@@ -45,6 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const rows = csvText.split("\n").map(row => row.split(","));
                 currentHeaders = rows.shift(); // Extract headers
                 tableData = rows; // Store table data
+                console.log("Loaded Data:", tableData); // Debugging
                 renderTable(currentHeaders, tableData); // Render the table with all data
             })
             .catch(err => console.error("Error loading dataset:", err));
@@ -79,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Apply number formatting if the column contains numeric data
                 const formattedCell = formatNumberIfNeeded(cell.trim(), columnName);
 
+                console.log("Formatted Cell:", formattedCell); // Debugging
+
                 // Highlight matching cells
                 if (query && formattedCell.toLowerCase().includes(query.toLowerCase())) {
                     td.innerHTML = `<span style="background-color: yellow;">${formattedCell}</span>`;
@@ -104,6 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const filteredRows = tableData.filter(row =>
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
+
+        console.log("Filtered Rows:", filteredRows); // Debugging
 
         renderTableBody(filteredRows, query); // Highlight matches
     }
@@ -131,6 +136,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const row = Array.from(tr.children).map(td => td.textContent);
             rows.push(row);
         });
+
+        console.log("Rows to Download:", rows); // Debugging
 
         // Convert rows to CSV format
         const csvContent = rows.map(row => row.join(",")).join("\n");
