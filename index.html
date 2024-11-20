@@ -8,10 +8,20 @@
 </head>
 <body>
     <h1>Rise of Kingdoms Stats</h1>
+    
+    <!-- Dropdown to select dataset -->
     <div>
         <label for="dataset-select">Choose Dataset:</label>
         <select id="dataset-select"></select>
     </div>
+
+    <!-- Search bar for filtering -->
+    <div>
+        <label for="table-filter">Filter Table:</label>
+        <input type="text" id="table-filter" placeholder="Type to search..." />
+    </div>
+
+    <!-- Table container -->
     <div id="table-container">
         <table id="stats-table">
             <thead>
@@ -20,6 +30,7 @@
             <tbody id="table-body"></tbody>
         </table>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
