@@ -1,3 +1,11 @@
+// Global function for tab switching
+function showTab(tabId) {
+    console.log("Switching to tab:", tabId); // Debugging
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => tab.classList.remove('active')); // Hide all tabs
+    document.getElementById(tabId).classList.add('active'); // Show the selected tab
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const datasetSelect = document.getElementById("dataset-select");
     const searchInput = document.getElementById("table-filter");
@@ -79,72 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
         downloadTableAsExcel();
     });
 
-    // Render the table with headers and rows
-    function renderTable(headers, rows) {
-        renderTableHeaders(headers);
-        renderTableBody(rows, ""); // Show all rows on initial load
-    }
-
-    // Render table headers
-    function renderTableHeaders(headers) {
-        tableHeaders.innerHTML = ""; // Clear existing headers
-        headers.forEach(header => {
-            const th = document.createElement("th");
-            th.textContent = header.trim();
-            tableHeaders.appendChild(th);
-        });
-    }
-
-    // Render table body with optional highlighting and formatting
-    function renderTableBody(rows, query) {
-        tableBody.innerHTML = ""; // Clear existing rows
-
-        rows.forEach(row => {
-            const tr = document.createElement("tr");
-            row.forEach((cell, index) => {
-                const td = document.createElement("td");
-                const columnName = currentHeaders[index].trim();
-
-                // Apply number formatting if the column contains numeric data
-                const formattedCell = formatNumberIfNeeded(cell.trim(), columnName);
-
-                console.log("Formatted Cell:", formattedCell); // Debugging
-
-                // Highlight matching cells
-                if (query && formattedCell.toLowerCase().includes(query.toLowerCase())) {
-                    td.innerHTML = `<span style="background-color: yellow;">${formattedCell}</span>`;
-                } else {
-                    td.innerHTML = formattedCell;
-                }
-
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
-        });
-    }
-
-    // Aggregate data for governor stats
-    function aggregateGovernorStats(fileUrl, rows) {
-        rows.forEach(row => {
-            const governorName = row[currentHeaders.indexOf("Governor Name")]?.trim();
-            if (!governorName) return;
-
-            if (!governorStats[governorName]) {
-                governorStats[governorName] = [];
-            }
-
-            const power = parseInt(row[currentHeaders.indexOf("Power")] || "0", 10);
-            const killPoints = parseInt(row[currentHeaders.indexOf("Kill Points")] || "0", 10);
-            const deaths = parseInt(row[currentHeaders.indexOf("Deaths")] || "0", 10);
-
-            governorStats[governorName].push({ file: fileUrl, power, killPoints, deaths });
-        });
-
-        console.log("Aggregated Governor Stats:", governorStats); // Debugging
-    }
-
     // Calculate stats differences for governors
     function calculateStatsDifferences() {
+        console.log("Calculating stats differences..."); // Debugging
         statsDifferencesContainer.innerHTML = ""; // Clear previous results
 
         Object.keys(governorStats).forEach(governorName => {
@@ -167,68 +112,8 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             statsDifferencesContainer.appendChild(differenceElement);
         });
-    }
 
-    // Tab switching logic
-    function showTab(tabId) {
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => tab.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-    }
-
-    // Apply filter and render the table with highlights
-    function filterTable(query) {
-        if (!query) {
-            // If no query, render the full dataset without highlights
-            renderTableBody(tableData, "");
-            return;
-        }
-
-        // Filter rows based on query
-        const filteredRows = tableData.filter(row =>
-            row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
-        );
-
-        console.log("Filtered Rows:", filteredRows); // Debugging
-
-        renderTableBody(filteredRows, query); // Highlight matches
-    }
-
-    // Format numbers with thousand separators if applicable
-    function formatNumberIfNeeded(value, columnName) {
-        if (!isNaN(value) && value !== "" && columnName !== "Governor ID") {
-            // Apply thousand separators for numeric columns
-            return parseInt(value, 10).toLocaleString("de-DE");
-        }
-        return value; // Return original value for non-numeric columns
-    }
-
-    // Download the visible table as CSV
-    function downloadTableAsExcel() {
-        const rows = []; // Collect rows to export
-
-        // Add headers as the first row
-        const headers = Array.from(tableHeaders.children).map(th => th.textContent);
-        rows.push(headers);
-
-        // Add visible rows (those currently in the DOM)
-        const visibleRows = Array.from(tableBody.querySelectorAll("tr"));
-        visibleRows.forEach(tr => {
-            const row = Array.from(tr.children).map(td => td.textContent);
-            rows.push(row);
-        });
-
-        console.log("Rows to Download:", rows); // Debugging
-
-        // Convert rows to CSV format
-        const csvContent = rows.map(row => row.join(",")).join("\n");
-
-        // Create and download CSV file
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "filtered_table_data.csv";
-        link.click();
+        console.log("Stats differences calculation complete."); // Debugging
     }
 
     // Fetch and populate the dropdown on page load
