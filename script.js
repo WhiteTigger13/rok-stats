@@ -173,8 +173,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Format numbers with thousand separators if applicable
     function formatNumberIfNeeded(value, columnName) {
+        // Trim the value to remove extra spaces
+        value = value.trim();
+
+        // Check if the value is a valid number
         if (!isNaN(value) && value !== "" && columnName !== "Governor ID") {
-            return parseInt(value, 10).toLocaleString("de-DE");
+            // Remove any non-numeric characters (like commas or spaces)
+            const numericValue = parseFloat(value.replace(/,/g, ""));
+            // Apply thousand separators for numeric columns
+            return numericValue.toLocaleString("de-DE");
         }
         return value; // Return original value for non-numeric columns
     }
