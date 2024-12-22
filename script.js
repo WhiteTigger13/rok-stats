@@ -52,28 +52,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function loadDataset(fileUrl) {
-        console.log("Loading dataset from:", fileUrl);
+   function loadDataset(fileUrl) {
+    console.log("Loading dataset from:", fileUrl);
 
-        fetch(fileUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch dataset: ${response.statusText}`);
-                }
-                return response.text();
-            })
-            .then(csvText => {
-                const rows = csvText.trim().split(/\r?\n/).map(row => row.split(","));
-                if (rows.length > 0) {
-                    currentHeaders = rows.shift().map(header => header.trim());
-                    tableData = rows.map(row => row.map(cell => cell.trim())); // Assign to global tableData
-                    renderTable(currentHeaders, tableData);
-                } else {
-                    console.error("No data found in the CSV file.");
-                }
-            })
-            .catch(err => console.error("Error loading dataset:", err));
-    }
+    fetch(fileUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to fetch dataset: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            const rows = csvText.trim().split(/\\r?\\n/).map(row => row.split(","));
+            if (rows.length > 0) {
+                currentHeaders = rows.shift().map(header => header.trim());
+                tableData = rows.map(row => row.map(cell => cell.trim())); // Assign to global tableData
+                renderTable(currentHeaders, tableData);
+            } else {
+                console.error("No data found in the CSV file.");
+            }
+        })
+        .catch(err => console.error("Error loading dataset:", err));
+}
 
     function renderTable(headers, rows) {
         tableHeaders.innerHTML = "";
