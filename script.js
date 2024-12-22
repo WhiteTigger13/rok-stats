@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(err => console.error("Error loading dataset:", err));
     }
 
-   function renderTable(headers, rows) {
+function renderTable(headers, rows) {
     tableHeaders.innerHTML = "";
     headers.forEach(header => {
         const th = document.createElement("th");
@@ -82,9 +82,14 @@ document.addEventListener("DOMContentLoaded", () => {
     tableBody.innerHTML = "";
     rows.forEach(row => {
         const tr = document.createElement("tr");
-        row.forEach(cell => {
+        row.forEach((cell, index) => {
             const td = document.createElement("td");
-            td.textContent = formatNumberIfNeeded(cell.trim());
+            // Skip formatting for the first two columns
+            if (index > 1) {
+                td.textContent = formatNumberIfNeeded(cell.trim());
+            } else {
+                td.textContent = cell.trim(); // Leave the first two columns as-is
+            }
             tr.appendChild(td);
         });
         tableBody.appendChild(tr);
@@ -93,12 +98,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Helper function to format numbers with thousand separators
 function formatNumberIfNeeded(value) {
-    // Check if the value is a valid number
-    if (!isNaN(value) && value !== "") {
-        return Number(value).toLocaleString("en-US"); // Change "en-US" to "de-DE" for dots instead of commas
+    // Attempt to parse the value as a number
+    const numericValue = Number(value.replace(/,/g, "")); // Handle pre-formatted values with commas
+    if (!isNaN(numericValue)) {
+        return numericValue.toLocaleString("en-US"); // Change "en-US" to "de-DE" for dots
     }
     return value; // Return original value if it's not numeric
 }
+
 
 
     fetchAvailableFiles();
