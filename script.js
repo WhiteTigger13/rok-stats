@@ -101,21 +101,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Render table body
-    function renderTableBody(rows) {
-        tableBody.innerHTML = ""; // Clear existing rows
+   // Render table body with number formatting for numeric values
+function renderTableBody(rows) {
+    tableBody.innerHTML = ""; // Clear existing rows
 
-        rows.forEach(row => {
-            const tr = document.createElement("tr");
-            row.forEach(cell => {
-                const td = document.createElement("td");
+    rows.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach((cell, index) => {
+            const td = document.createElement("td");
+
+            // Apply thousand separator formatting for numeric columns (except columns 1 and 2)
+            if (index >= 2 && !isNaN(cell) && cell.trim() !== "") {
+                td.textContent = formatNumberWithSeparators(cell.trim());
+            } else {
                 td.textContent = cell.trim();
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
-        });
-    }
+            }
 
+            tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+    });
+}
+
+// Helper function to add thousand separators to numbers
+function formatNumberWithSeparators(value) {
+    return parseInt(value, 10).toLocaleString("en-US");
+}
     // Filter the table based on search input
     function filterTable(query) {
         const filteredRows = tableData.filter(row =>
