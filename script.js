@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentHeaders = []; // Store the headers
     const governorStats = {}; // Store aggregated governor data
 
+    const corsProxy = "https://cors-anywhere.herokuapp.com/"; // Add CORS proxy
+
     const repoOwner = "WhiteTigger13"; // Your GitHub username
     const repoName = "rok-stats"; // Your GitHub repository name
     const branchName = "main"; // Your repository's branch name
@@ -50,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load dataset from CSV and render table
     function loadDataset(fileUrl) {
-        fetch(fileUrl, { headers: { 'Content-Type': 'text/csv; charset=utf-8' } })
+        fetch(corsProxy + fileUrl, { headers: { 'Content-Type': 'text/csv; charset=utf-8' } })
             .then(response => response.text())
             .then(csvText => {
                 const rows = csvText.trim().split(/\r?\n/).map(row => row.split(","));
