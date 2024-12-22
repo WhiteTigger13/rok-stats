@@ -4,32 +4,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableHeaders = document.getElementById("table-headers");
     const tableBody = document.getElementById("table-body");
     const downloadButton = document.getElementById("download-button");
-    const statsDifferencesContainer = document.getElementById("stats-differences");
 
     let tableData = []; // Store the currently loaded table data
     let currentHeaders = []; // Store the headers
-    const basePath = "https://whitetigger13.github.io/rok-stats/data/"; // Path to CSV files
 
-    // List of CSV files (manually maintained or fetched from GitHub)
-    const csvFiles = [
-        "1599_November_Progress_Tracker.csv",
-        "1599_December_Progress_Tracker.csv",
-        // Add more files here as needed
-    ];
+    const repoOwner = "WhiteTigger13"; // Your GitHub username
+    const repoName = "rok-stats"; // Your GitHub repository name
+    const branchName = "main"; // Your repository's branch name
+    const dataPath = "data"; // Path to the CSV files within your repo
+
+    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${dataPath}?ref=${branchName}`;
+
+    // Fetch available files from the GitHub repository
+    function fetchAvailableFiles() {
+        fetch(githubApiUrl, { headers: { Accept: "application/vnd.github.v3+json" } })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error fetching file list: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(files => {
+                const csvFiles = files.filter(file => file.name.endsWith(".csv"));
+                populateDropdown(csvFiles);
+            })
+            .catch(err => console.error("Error fetching file list:", err));
+    }
 
     // Populate the dropdown with file names
-    function populateDropdown() {
+    function populateDropdown(files) {
         datasetSelect.innerHTML = ""; // Clear existing options
-        csvFiles.forEach(file => {
+        files.forEach(file => {
             const option = document.createElement("option");
-            option.value = basePath + file; // Full URL of the CSV file
-            option.textContent = file.replace(/_/g, " ").replace(".csv", ""); // Pretty name
+            option.value = file.download_url; // Use the direct download URL
+            option.textContent = file.name.replace(/_/g, " ").replace(".csv", ""); // Pretty name
             datasetSelect.appendChild(option);
         });
 
         // Automatically load the first file if available
-        if (csvFiles.length > 0) {
-            loadDataset(basePath + csvFiles[0]);
+        if (files.length > 0) {
+            loadDataset(files[0].download_url);
         }
     }
 
@@ -38,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(fileUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch: ${response.statusText}`);
+                    throw new Error(`Failed to fetch CSV: ${response.statusText}`);
                 }
                 return response.text();
             })
@@ -160,5 +174,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Initialize the dropdown and load the first dataset
-    populateDropdown();
+    fetchAvailableFiles();
 });
