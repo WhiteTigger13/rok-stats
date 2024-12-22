@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Fetch available files from the GitHub repository
     function fetchAvailableFiles() {
-        fetch(githubApiUrl, { headers: { 'Content-Type': 'application/json; charset=utf-8' } })
+        fetch(githubApiUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -50,12 +50,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load dataset from CSV and render table
     function loadDataset(fileUrl) {
-        fetch(fileUrl, { headers: { 'Content-Type': 'text/csv; charset=utf-8' } })
+        fetch(fileUrl)
             .then(response => response.text())
             .then(csvText => {
                 const rows = csvText.trim().split(/\r?\n/).map(row => row.split(","));
-                currentHeaders = rows.shift().map(header => header.trim()); // Trim headers
-                tableData = rows.filter(row => row.length === currentHeaders.length).map(row => row.map(cell => cell.trim())); // Filter valid rows
+                currentHeaders = rows.shift(); // Extract headers
+                tableData = rows.filter(row => row.length === currentHeaders.length); // Filter valid rows
                 console.log("Table Data:", tableData); // Debugging
                 console.log("Current Headers:", currentHeaders); // Debugging
                 renderTable(currentHeaders, tableData); // Render the table with all data
@@ -137,9 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 governorStats[governorName] = [];
             }
 
-            const power = parseInt(row[powerIndex]?.replace(/,/g, "") || "0", 10);
-            const killPoints = parseInt(row[killPointsIndex]?.replace(/,/g, "") || "0", 10);
-            const deaths = parseInt(row[deathsIndex]?.replace(/,/g, "") || "0", 10);
+            const power = parseInt(row[powerIndex] || "0", 10);
+            const killPoints = parseInt(row[killPointsIndex] || "0", 10);
+            const deaths = parseInt(row[deathsIndex] || "0", 10);
 
             governorStats[governorName].push({ power, killPoints, deaths });
         });
