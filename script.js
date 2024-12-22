@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then(files => {
                 const csvFiles = files.filter(file => file.name.endsWith(".csv"));
-                console.log("CSV Files:", csvFiles); // Debugging
                 populateDropdown(csvFiles);
             })
             .catch(err => console.error("Error fetching file list:", err));
@@ -51,17 +50,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load dataset from CSV and render table
     function loadDataset(fileUrl) {
-        console.log("Loading dataset:", fileUrl); // Debugging
-
         fetch(fileUrl)
             .then(response => response.text())
             .then(csvText => {
                 const rows = csvText.split("\n").map(row => row.split(","));
                 currentHeaders = rows.shift(); // Extract headers
                 tableData = rows; // Store table data
-                console.log("Loaded Data:", tableData); // Debugging
                 renderTable(currentHeaders, tableData); // Render the table with all data
-                aggregateGovernorStats(fileUrl, rows); // Aggregate data for stats differences
+                aggregateGovernorStats(rows); // Aggregate data for stats differences
             })
             .catch(err => console.error("Error loading dataset:", err));
     }
@@ -76,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     downloadButton.addEventListener("click", () => {
-        downloadTableAsExcel();
+        downloadTableAsCSV();
     });
 
     // Render the table with headers and rows
@@ -85,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderTableBody(rows, ""); // Show all rows on initial load
     }
 
-    // Render table headers
+    // Render table headers dynamically
     function renderTableHeaders(headers) {
         tableHeaders.innerHTML = ""; // Clear existing headers
         headers.forEach(header => {
@@ -103,12 +99,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const tr = document.createElement("tr");
             row.forEach((cell, index) => {
                 const td = document.createElement("td");
-                const columnName = currentHeaders[index].trim();
+                const columnName = currentHeaders[index]?.trim();
 
                 // Apply number formatting if the column contains numeric data
                 const formattedCell = formatNumberIfNeeded(cell.trim(), columnName);
-
-                console.log("Formatted Cell:", formattedCell); // Debugging
 
                 // Highlight matching cells
                 if (query && formattedCell.toLowerCase().includes(query.toLowerCase())) {
@@ -123,88 +117,42 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Aggregate data for governor stats
-    function aggregateGovernorStats(fileUrl, rows) {
+    // Aggregate data for governor stats dynamically
+    function aggregateGovernorStats(rows) {
+        governorStats = {}; // Reset stats
         rows.forEach(row => {
-            const governorName = row[currentHeaders.indexOf("Governor Name")]?.trim();
+            const governorNameIndex = currentHeaders.findIndex(header => header.toLowerCase().includes("governor name"));
+            const powerIndex = currentHeaders.findIndex(header => header.toLowerCase().includes("power"));
+            const killPointsIndex = currentHeaders.findIndex(header => header.toLowerCase().includes("kill"));
+            const deathsIndex = currentHeaders.findIndex(header => header.toLowerCase().includes("dead"));
+
+            if (governorNameIndex === -1) return;
+
+            const governorName = row[governorNameIndex]?.trim();
             if (!governorName) return;
 
             if (!governorStats[governorName]) {
                 governorStats[governorName] = [];
             }
 
-            const power = parseInt(row[currentHeaders.indexOf("Power")] || "0", 10);
-            const killPoints = parseInt(row[currentHeaders.indexOf("Kill Points")] || "0", 10);
-            const deaths = parseInt(row[currentHeaders.indexOf("Deaths")] || "0", 10);
+            const power = parseInt(row[powerIndex] || "0", 10);
+            const killPoints = parseInt(row[killPointsIndex] || "0", 10);
+            const deaths = parseInt(row[deathsIndex] || "0", 10);
 
-            governorStats[governorName].push({ file: fileUrl, power, killPoints, deaths });
+            governorStats[governorName].push({ power, killPoints, deaths });
         });
-
-        console.log("Aggregated Governor Stats:", governorStats); // Debugging
-    }
-
-    // Calculate stats differences for governors
-    function calculateStatsDifferences() {
-        statsDifferencesContainer.innerHTML = ""; // Clear previous results
-
-        Object.keys(governorStats).forEach(governorName => {
-            const stats = governorStats[governorName];
-            if (stats.length < 2) return; // Skip if there's not enough data for comparison
-
-            const latest = stats[stats.length - 1];
-            const previous = stats[stats.length - 2];
-
-            const powerChange = latest.power - previous.power;
-            const killPointsChange = latest.killPoints - previous.killPoints;
-            const deathsChange = latest.deaths - previous.deaths;
-
-            const differenceElement = document.createElement("div");
-            differenceElement.innerHTML = `
-                <h4>${governorName}</h4>
-                <p>Power Change: ${powerChange > 0 ? "+" : ""}${powerChange}</p>
-                <p>Kill Points Change: ${killPointsChange > 0 ? "+" : ""}${killPointsChange}</p>
-                <p>Deaths Change: ${deathsChange > 0 ? "+" : ""}${deathsChange}</p>
-            `;
-            statsDifferencesContainer.appendChild(differenceElement);
-        });
-    }
-
-    // Tab switching logic
-    function showTab(tabId) {
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => tab.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-    }
-
-    // Apply filter and render the table with highlights
-    function filterTable(query) {
-        if (!query) {
-            // If no query, render the full dataset without highlights
-            renderTableBody(tableData, "");
-            return;
-        }
-
-        // Filter rows based on query
-        const filteredRows = tableData.filter(row =>
-            row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
-        );
-
-        console.log("Filtered Rows:", filteredRows); // Debugging
-
-        renderTableBody(filteredRows, query); // Highlight matches
     }
 
     // Format numbers with thousand separators if applicable
     function formatNumberIfNeeded(value, columnName) {
-        if (!isNaN(value) && value !== "" && columnName !== "Governor ID") {
-            // Apply thousand separators for numeric columns
+        if (!isNaN(value) && value !== "" && columnName && !columnName.toLowerCase().includes("id")) {
             return parseInt(value, 10).toLocaleString("de-DE");
         }
         return value; // Return original value for non-numeric columns
     }
 
     // Download the visible table as CSV
-    function downloadTableAsExcel() {
+    function downloadTableAsCSV() {
         const rows = []; // Collect rows to export
 
         // Add headers as the first row
@@ -218,8 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
             rows.push(row);
         });
 
-        console.log("Rows to Download:", rows); // Debugging
-
         // Convert rows to CSV format
         const csvContent = rows.map(row => row.join(",")).join("\n");
 
@@ -229,6 +175,21 @@ document.addEventListener("DOMContentLoaded", () => {
         link.href = URL.createObjectURL(blob);
         link.download = "filtered_table_data.csv";
         link.click();
+    }
+
+    // Apply filter and render the table with highlights
+    function filterTable(query) {
+        if (!query) {
+            renderTableBody(tableData, ""); // Show all rows without highlights
+            return;
+        }
+
+        // Filter rows based on query
+        const filteredRows = tableData.filter(row =>
+            row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
+        );
+
+        renderTableBody(filteredRows, query); // Highlight matches
     }
 
     // Fetch and populate the dropdown on page load
