@@ -99,8 +99,13 @@ function renderTable(headers, rows) {
 // Helper function to format numbers with thousand separators
 function formatNumberIfNeeded(value) {
     // Attempt to parse the value as a number
-    const numericValue = Number(value.replace(/,/g, "")); // Handle pre-formatted values with commas
+    const numericValue = Number(value.replace(/[(),]/g, "")); // Remove brackets and commas for parsing
     if (!isNaN(numericValue)) {
+        if (numericValue < 0) {
+            // Format negative numbers with parentheses
+            return `(${Math.abs(numericValue).toLocaleString("en-US")})`;
+        }
+        // Format positive numbers with thousand separators
         return numericValue.toLocaleString("en-US"); // Change "en-US" to "de-DE" for dots
     }
     return value; // Return original value if it's not numeric
