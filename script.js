@@ -53,9 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(fileUrl)
             .then(response => response.text())
             .then(csvText => {
-                const rows = csvText.split("\n").map(row => row.split(","));
+                const rows = csvText.trim().split(/\r?\n/).map(row => row.split(","));
                 currentHeaders = rows.shift(); // Extract headers
-                tableData = rows; // Store table data
+                tableData = rows.filter(row => row.length === currentHeaders.length); // Filter valid rows
+                console.log("Table Data:", tableData); // Debugging
+                console.log("Current Headers:", currentHeaders); // Debugging
                 renderTable(currentHeaders, tableData); // Render the table with all data
                 aggregateGovernorStats(rows); // Aggregate data for stats differences
             })
@@ -119,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Aggregate data for governor stats dynamically
     function aggregateGovernorStats(rows) {
-        governorStats = {}; // Reset stats
+        Object.keys(governorStats).forEach(key => delete governorStats[key]); // Reset stats
         rows.forEach(row => {
             const governorNameIndex = currentHeaders.findIndex(header => header.toLowerCase().includes("governor name"));
             const powerIndex = currentHeaders.findIndex(header => header.toLowerCase().includes("power"));
