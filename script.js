@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then(files => {
                 const csvFiles = files.filter(file => file.name.endsWith(".csv"));
-                console.log("CSV Files:", csvFiles); // Debugging
                 populateDropdown(csvFiles);
             })
             .catch(err => console.error("Error fetching file list:", err));
@@ -51,24 +50,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load dataset from CSV and render table
     function loadDataset(fileUrl) {
-        console.log("Loading dataset:", fileUrl); // Debugging
-
         fetch(fileUrl)
             .then(response => response.text())
             .then(csvText => {
                 const rows = csvText.split("\n").map(row => row.split(","));
                 currentHeaders = rows.shift(); // Extract headers
                 tableData = rows; // Store table data
-                console.log("Loaded Data:", tableData); // Debugging
-                renderTable(currentHeaders, tableData); // Render the table with all data
-                aggregateGovernorStats(fileUrl, rows); // Aggregate data for stats differences
+                renderTable(currentHeaders, tableData);
             })
-            .catch(err => console.error("Error loading dataset:", err));
+            .catch(err => {
+                console.error("Error loading dataset:", err);
+                renderErrorMessage("Failed to load dataset.");
+            });
+    }
+
+    // Render error message in table
+    function renderErrorMessage(message) {
+        tableHeaders.innerHTML = ""; // Clear headers
+        tableBody.innerHTML = `<tr><td colspan="100%" style="color:red; text-align:center;">${message}</td></tr>`;
     }
 
     datasetSelect.addEventListener("change", (event) => {
         const selectedFile = event.target.value;
-        loadDataset(selectedFile);
+        if (selectedFile) {
+            loadDataset(selectedFile);
+        }
     });
 
     searchInput.addEventListener("input", (event) => {
@@ -82,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Render the table with headers and rows
     function renderTable(headers, rows) {
         renderTableHeaders(headers);
-        renderTableBody(rows, ""); // Show all rows on initial load
+        renderTableBody(rows);
     }
 
     // Render table headers
@@ -95,142 +101,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Render table body with optional highlighting and formatting
-    function renderTableBody(rows, query) {
+    // Render table body
+    function renderTableBody(rows) {
         tableBody.innerHTML = ""; // Clear existing rows
 
         rows.forEach(row => {
             const tr = document.createElement("tr");
-            row.forEach((cell, index) => {
+            row.forEach(cell => {
                 const td = document.createElement("td");
-                const columnName = currentHeaders[index].trim();
-
-                // Apply number formatting if the column contains numeric data
-                const formattedCell = formatNumberIfNeeded(cell.trim(), columnName);
-
-                console.log("Formatted Cell:", formattedCell); // Debugging
-
-                // Highlight matching cells
-                if (query && formattedCell.toLowerCase().includes(query.toLowerCase())) {
-                    td.innerHTML = `<span style="background-color: yellow;">${formattedCell}</span>`;
-                } else {
-                    td.innerHTML = formattedCell;
-                }
-
+                td.textContent = cell.trim();
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr);
         });
     }
 
-    // Aggregate data for governor stats
-    function aggregateGovernorStats(fileUrl, rows) {
-        rows.forEach(row => {
-            const governorName = row[currentHeaders.indexOf("Governor Name")]?.trim();
-            if (!governorName) return;
-
-            if (!governorStats[governorName]) {
-                governorStats[governorName] = [];
-            }
-
-            const power = parseInt(row[currentHeaders.indexOf("Power")] || "0", 10);
-            const killPoints = parseInt(row[currentHeaders.indexOf("Kill Points")] || "0", 10);
-            const deaths = parseInt(row[currentHeaders.indexOf("Deaths")] || "0", 10);
-
-            governorStats[governorName].push({ file: fileUrl, power, killPoints, deaths });
-        });
-
-        console.log("Aggregated Governor Stats:", governorStats); // Debugging
-    }
-
-    // Calculate stats differences for governors
-    function calculateStatsDifferences() {
-        statsDifferencesContainer.innerHTML = ""; // Clear previous results
-
-        Object.keys(governorStats).forEach(governorName => {
-            const stats = governorStats[governorName];
-            if (stats.length < 2) return; // Skip if there's not enough data for comparison
-
-            const latest = stats[stats.length - 1];
-            const previous = stats[stats.length - 2];
-
-            const powerChange = latest.power - previous.power;
-            const killPointsChange = latest.killPoints - previous.killPoints;
-            const deathsChange = latest.deaths - previous.deaths;
-
-            const differenceElement = document.createElement("div");
-            differenceElement.innerHTML = `
-                <h4>${governorName}</h4>
-                <p>Power Change: ${powerChange > 0 ? "+" : ""}${powerChange}</p>
-                <p>Kill Points Change: ${killPointsChange > 0 ? "+" : ""}${killPointsChange}</p>
-                <p>Deaths Change: ${deathsChange > 0 ? "+" : ""}${deathsChange}</p>
-            `;
-            statsDifferencesContainer.appendChild(differenceElement);
-        });
-    }
-
-    // Tab switching logic
-    function showTab(tabId) {
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => tab.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-    }
-
-    // Apply filter and render the table with highlights
+    // Filter the table based on search input
     function filterTable(query) {
-        if (!query) {
-            // If no query, render the full dataset without highlights
-            renderTableBody(tableData, "");
-            return;
-        }
-
-        // Filter rows based on query
         const filteredRows = tableData.filter(row =>
             row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
         );
-
-        console.log("Filtered Rows:", filteredRows); // Debugging
-
-        renderTableBody(filteredRows, query); // Highlight matches
-    }
-
-    // Format numbers with thousand separators if applicable
-    function formatNumberIfNeeded(value, columnName) {
-        if (!isNaN(value) && value !== "" && columnName !== "Governor ID") {
-            // Apply thousand separators for numeric columns
-            return parseInt(value, 10).toLocaleString("de-DE");
-        }
-        return value; // Return original value for non-numeric columns
+        renderTableBody(filteredRows);
     }
 
     // Download the visible table as CSV
     function downloadTableAsExcel() {
-        const rows = []; // Collect rows to export
-
-        // Add headers as the first row
-        const headers = Array.from(tableHeaders.children).map(th => th.textContent);
-        rows.push(headers);
-
-        // Add visible rows (those currently in the DOM)
-        const visibleRows = Array.from(tableBody.querySelectorAll("tr"));
-        visibleRows.forEach(tr => {
-            const row = Array.from(tr.children).map(td => td.textContent);
-            rows.push(row);
-        });
-
-        console.log("Rows to Download:", rows); // Debugging
-
-        // Convert rows to CSV format
+        const rows = [currentHeaders, ...tableData]; // Include headers and data
         const csvContent = rows.map(row => row.join(",")).join("\n");
-
-        // Create and download CSV file
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "filtered_table_data.csv";
+        link.download = "table_data.csv";
         link.click();
     }
 
-    // Fetch and populate the dropdown on page load
     fetchAvailableFiles();
 });
