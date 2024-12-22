@@ -88,17 +88,23 @@ document.addEventListener("DOMContentLoaded", () => {
             tableHeaders.appendChild(th);
         });
 
-        tableBody.innerHTML = "";
+        // Use renderTableBody to populate the table body
+        renderTableBody(rows);
+    }
+
+    function renderTableBody(rows) {
+        tableBody.innerHTML = ""; // Clear any existing rows
+
         rows.forEach(row => {
             const tr = document.createElement("tr");
             row.forEach((cell, index) => {
                 const td = document.createElement("td");
-                td.textContent = index > 1 ? formatNumberIfNeeded(cell) : cell; // Skip formatting for the first two columns
+                td.textContent = index > 1 ? formatNumberIfNeeded(cell) : cell;
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr);
         });
-        console.log("Table rendered.");
+        console.log("Table body rendered with rows:", rows);
     }
 
     function sortTableByColumn(columnIndex) {
