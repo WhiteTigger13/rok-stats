@@ -1,143 +1,236 @@
 document.addEventListener("DOMContentLoaded", () => {
     const datasetSelect = document.getElementById("dataset-select");
+    const searchInput = document.getElementById("table-filter");
     const tableHeaders = document.getElementById("table-headers");
     const tableBody = document.getElementById("table-body");
+    const downloadButton = document.getElementById("download-button");
+    const statsDifferencesContainer = document.getElementById("stats-differences");
 
-    const repoOwner = "WhiteTigger13";
-    const repoName = "rok-stats";
-    const branchName = "main";
-    const dataPath = "data";
+    let tableData = []; // Store the currently loaded table data
+    let currentHeaders = []; // Store the headers
+    const governorStats = {}; // Store aggregated governor data
 
-    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${dataPath}?ref=${branchName}`;
+    const repoOwner = "WhiteTigger13"; // Your GitHub username
+    const repoName = "rok-stats"; // Your GitHub repository name
+    const branchName = "main"; // Your repository's branch name
 
-    let tableData = []; // Store table rows globally
-    let currentHeaders = []; // Store table headers globally
-    let sortDirection = 1; // 1 for ascending, -1 for descending
+    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/data?ref=${branchName}`;
 
+    // Fetch available files from the GitHub repository
     function fetchAvailableFiles() {
-        console.log("Fetching files from:", githubApiUrl);
-
-        fetch(githubApiUrl, { headers: { Accept: "application/vnd.github.v3+json" } })
+        fetch(githubApiUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Error fetching file list: ${response.statusText}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(files => {
-                console.log("Fetched files:", files);
-
                 const csvFiles = files.filter(file => file.name.endsWith(".csv"));
-                if (csvFiles.length === 0) {
-                    console.error("No CSV files found in the directory.");
-                    return;
-                }
-
+                console.log("CSV Files:", csvFiles); // Debugging
                 populateDropdown(csvFiles);
             })
-            .catch(err => console.error("Error fetching files:", err));
+            .catch(err => console.error("Error fetching file list:", err));
     }
 
+    // Populate the dropdown with file names
     function populateDropdown(files) {
-        datasetSelect.innerHTML = "";
+        datasetSelect.innerHTML = ""; // Clear existing options
         files.forEach(file => {
             const option = document.createElement("option");
-            option.value = file.download_url;
-            option.textContent = file.name.replace(/_/g, " ").replace(".csv", "");
+            option.value = file.download_url; // Use the direct download URL
+            option.textContent = file.name; // Use the file name as the display name
             datasetSelect.appendChild(option);
         });
 
+        // Automatically load the first file if available
         if (files.length > 0) {
             loadDataset(files[0].download_url);
         }
     }
 
+    // Load dataset from CSV and render table
     function loadDataset(fileUrl) {
-        console.log("Loading dataset from:", fileUrl);
+        console.log("Loading dataset:", fileUrl); // Debugging
 
         fetch(fileUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch dataset: ${response.statusText}`);
-                }
-                return response.text();
-            })
+            .then(response => response.text())
             .then(csvText => {
-                const rows = csvText.trim().split(/\\r?\\n/).map(row => row.split(","));
-                if (rows.length > 0) {
-                    currentHeaders = rows.shift().map(header => header.trim());
-                    tableData = rows.map(row => row.map(cell => cell.trim())); // Assign to global tableData
-                    renderTable(currentHeaders, tableData);
-                } else {
-                    console.error("No data found in the CSV file.");
-                }
+                const rows = csvText.split("\n").map(row => row.split(","));
+                currentHeaders = rows.shift(); // Extract headers
+                tableData = rows; // Store table data
+                console.log("Loaded Data:", tableData); // Debugging
+                renderTable(currentHeaders, tableData); // Render the table with all data
+                aggregateGovernorStats(fileUrl, rows); // Aggregate data for stats differences
             })
             .catch(err => console.error("Error loading dataset:", err));
     }
 
-    function renderTable(headers, rows) {
-        tableHeaders.innerHTML = "";
-        headers.forEach((header, index) => {
-            const th = document.createElement("th");
-            th.textContent = header;
-            th.style.cursor = "pointer"; // Indicate clickable headers
-            th.addEventListener("click", () => {
-                console.log(`Header clicked: ${header} (index ${index})`);
-                sortTableByColumn(index); // Sort on header click
-            });
-            tableHeaders.appendChild(th);
-        });
+    datasetSelect.addEventListener("change", (event) => {
+        const selectedFile = event.target.value;
+        loadDataset(selectedFile);
+    });
 
-        // Use renderTableBody to populate the table body
-        renderTableBody(rows);
+    searchInput.addEventListener("input", (event) => {
+        filterTable(event.target.value);
+    });
+
+    downloadButton.addEventListener("click", () => {
+        downloadTableAsExcel();
+    });
+
+    // Render the table with headers and rows
+    function renderTable(headers, rows) {
+        renderTableHeaders(headers);
+        renderTableBody(rows, ""); // Show all rows on initial load
     }
 
-    function renderTableBody(rows) {
-        tableBody.innerHTML = ""; // Clear any existing rows
+    // Render table headers
+    function renderTableHeaders(headers) {
+        tableHeaders.innerHTML = ""; // Clear existing headers
+        headers.forEach(header => {
+            const th = document.createElement("th");
+            th.textContent = header.trim();
+            tableHeaders.appendChild(th);
+        });
+    }
+
+    // Render table body with optional highlighting and formatting
+    function renderTableBody(rows, query) {
+        tableBody.innerHTML = ""; // Clear existing rows
 
         rows.forEach(row => {
             const tr = document.createElement("tr");
             row.forEach((cell, index) => {
                 const td = document.createElement("td");
-                td.textContent = index > 1 ? formatNumberIfNeeded(cell) : cell;
+                const columnName = currentHeaders[index].trim();
+
+                // Apply number formatting if the column contains numeric data
+                const formattedCell = formatNumberIfNeeded(cell.trim(), columnName);
+
+                console.log("Formatted Cell:", formattedCell); // Debugging
+
+                // Highlight matching cells
+                if (query && formattedCell.toLowerCase().includes(query.toLowerCase())) {
+                    td.innerHTML = `<span style="background-color: yellow;">${formattedCell}</span>`;
+                } else {
+                    td.innerHTML = formattedCell;
+                }
+
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr);
         });
-        console.log("Table body rendered with rows:", rows);
     }
 
-    function sortTableByColumn(columnIndex) {
-        console.log(`Sorting column ${columnIndex} in ${sortDirection === 1 ? "ascending" : "descending"} order.`);
+    // Aggregate data for governor stats
+    function aggregateGovernorStats(fileUrl, rows) {
+        rows.forEach(row => {
+            const governorName = row[currentHeaders.indexOf("Governor Name")]?.trim();
+            if (!governorName) return;
 
-        tableData.sort((a, b) => {
-            const valA = a[columnIndex].replace(/[(),]/g, ""); // Remove formatting for comparison
-            const valB = b[columnIndex].replace(/[(),]/g, "");
-
-            const numA = parseFloat(valA);
-            const numB = parseFloat(valB);
-
-            if (!isNaN(numA) && !isNaN(numB)) {
-                return sortDirection * (numA - numB);
+            if (!governorStats[governorName]) {
+                governorStats[governorName] = [];
             }
-            return sortDirection * valA.localeCompare(valB);
+
+            const power = parseInt(row[currentHeaders.indexOf("Power")] || "0", 10);
+            const killPoints = parseInt(row[currentHeaders.indexOf("Kill Points")] || "0", 10);
+            const deaths = parseInt(row[currentHeaders.indexOf("Deaths")] || "0", 10);
+
+            governorStats[governorName].push({ file: fileUrl, power, killPoints, deaths });
         });
 
-        sortDirection *= -1; // Toggle sort direction
-        renderTable(currentHeaders, tableData); // Re-render the table
-        console.log("Table sorted and re-rendered.");
+        console.log("Aggregated Governor Stats:", governorStats); // Debugging
     }
 
-    function formatNumberIfNeeded(value) {
-        const numericValue = Number(value.replace(/[(),]/g, ""));
-        if (!isNaN(numericValue)) {
-            if (numericValue < 0) {
-                return `(${Math.abs(numericValue).toLocaleString("en-US")})`;
-            }
-            return numericValue.toLocaleString("en-US");
+    // Calculate stats differences for governors
+    function calculateStatsDifferences() {
+        statsDifferencesContainer.innerHTML = ""; // Clear previous results
+
+        Object.keys(governorStats).forEach(governorName => {
+            const stats = governorStats[governorName];
+            if (stats.length < 2) return; // Skip if there's not enough data for comparison
+
+            const latest = stats[stats.length - 1];
+            const previous = stats[stats.length - 2];
+
+            const powerChange = latest.power - previous.power;
+            const killPointsChange = latest.killPoints - previous.killPoints;
+            const deathsChange = latest.deaths - previous.deaths;
+
+            const differenceElement = document.createElement("div");
+            differenceElement.innerHTML = `
+                <h4>${governorName}</h4>
+                <p>Power Change: ${powerChange > 0 ? "+" : ""}${powerChange}</p>
+                <p>Kill Points Change: ${killPointsChange > 0 ? "+" : ""}${killPointsChange}</p>
+                <p>Deaths Change: ${deathsChange > 0 ? "+" : ""}${deathsChange}</p>
+            `;
+            statsDifferencesContainer.appendChild(differenceElement);
+        });
+    }
+
+    // Tab switching logic
+    function showTab(tabId) {
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // Apply filter and render the table with highlights
+    function filterTable(query) {
+        if (!query) {
+            // If no query, render the full dataset without highlights
+            renderTableBody(tableData, "");
+            return;
         }
-        return value;
+
+        // Filter rows based on query
+        const filteredRows = tableData.filter(row =>
+            row.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
+        );
+
+        console.log("Filtered Rows:", filteredRows); // Debugging
+
+        renderTableBody(filteredRows, query); // Highlight matches
     }
 
+    // Format numbers with thousand separators if applicable
+    function formatNumberIfNeeded(value, columnName) {
+        if (!isNaN(value) && value !== "" && columnName !== "Governor ID") {
+            // Apply thousand separators for numeric columns
+            return parseInt(value, 10).toLocaleString("de-DE");
+        }
+        return value; // Return original value for non-numeric columns
+    }
+
+    // Download the visible table as CSV
+    function downloadTableAsExcel() {
+        const rows = []; // Collect rows to export
+
+        // Add headers as the first row
+        const headers = Array.from(tableHeaders.children).map(th => th.textContent);
+        rows.push(headers);
+
+        // Add visible rows (those currently in the DOM)
+        const visibleRows = Array.from(tableBody.querySelectorAll("tr"));
+        visibleRows.forEach(tr => {
+            const row = Array.from(tr.children).map(td => td.textContent);
+            rows.push(row);
+        });
+
+        console.log("Rows to Download:", rows); // Debugging
+
+        // Convert rows to CSV format
+        const csvContent = rows.map(row => row.join(",")).join("\n");
+
+        // Create and download CSV file
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "filtered_table_data.csv";
+        link.click();
+    }
+
+    // Fetch and populate the dropdown on page load
     fetchAvailableFiles();
 });
