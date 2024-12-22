@@ -52,28 +52,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-   function loadDataset(fileUrl) {
-    console.log("Loading dataset from:", fileUrl);
+    function loadDataset(fileUrl) {
+        console.log("Loading dataset from:", fileUrl);
 
-    fetch(fileUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to fetch dataset: ${response.statusText}`);
-            }
-            return response.text();
-        })
-        .then(csvText => {
-            const rows = csvText.trim().split(/\\r?\\n/).map(row => row.split(","));
-            if (rows.length > 0) {
-                currentHeaders = rows.shift().map(header => header.trim());
-                tableData = rows.map(row => row.map(cell => cell.trim())); // Assign to global tableData
-                renderTable(currentHeaders, tableData);
-            } else {
-                console.error("No data found in the CSV file.");
-            }
-        })
-        .catch(err => console.error("Error loading dataset:", err));
-}
+        fetch(fileUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch dataset: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(csvText => {
+                const rows = csvText.trim().split(/\\r?\\n/).map(row => row.split(","));
+                if (rows.length > 0) {
+                    currentHeaders = rows.shift().map(header => header.trim());
+                    tableData = rows.map(row => row.map(cell => cell.trim())); // Assign to global tableData
+                    renderTable(currentHeaders, tableData);
+                } else {
+                    console.error("No data found in the CSV file.");
+                }
+            })
+            .catch(err => console.error("Error loading dataset:", err));
+    }
 
     function renderTable(headers, rows) {
         tableHeaders.innerHTML = "";
@@ -82,6 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
             th.textContent = header;
             th.style.cursor = "pointer"; // Indicate clickable headers
             th.addEventListener("click", () => {
+                console.log(`Header clicked: ${header} (index ${index})`);
                 sortTableByColumn(index); // Sort on header click
             });
             tableHeaders.appendChild(th);
@@ -97,28 +98,29 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             tableBody.appendChild(tr);
         });
+        console.log("Table rendered.");
     }
 
-  function sortTableByColumn(columnIndex) {
-    console.log(`Sorting column ${columnIndex} in ${sortDirection === 1 ? "ascending" : "descending"} order.`);
+    function sortTableByColumn(columnIndex) {
+        console.log(`Sorting column ${columnIndex} in ${sortDirection === 1 ? "ascending" : "descending"} order.`);
 
-    tableData.sort((a, b) => {
-        const valA = a[columnIndex].replace(/[(),]/g, ""); // Remove formatting for comparison
-        const valB = b[columnIndex].replace(/[(),]/g, "");
+        tableData.sort((a, b) => {
+            const valA = a[columnIndex].replace(/[(),]/g, ""); // Remove formatting for comparison
+            const valB = b[columnIndex].replace(/[(),]/g, "");
 
-        const numA = parseFloat(valA);
-        const numB = parseFloat(valB);
+            const numA = parseFloat(valA);
+            const numB = parseFloat(valB);
 
-        if (!isNaN(numA) && !isNaN(numB)) {
-            return sortDirection * (numA - numB);
-        }
-        return sortDirection * valA.localeCompare(valB);
-    });
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return sortDirection * (numA - numB);
+            }
+            return sortDirection * valA.localeCompare(valB);
+        });
 
-    sortDirection *= -1; // Toggle sort direction
-    renderTable(currentHeaders, tableData); // Re-render the table
-    console.log("Table sorted and re-rendered.");
-}
+        sortDirection *= -1; // Toggle sort direction
+        renderTable(currentHeaders, tableData); // Re-render the table
+        console.log("Table sorted and re-rendered.");
+    }
 
     function formatNumberIfNeeded(value) {
         const numericValue = Number(value.replace(/[(),]/g, ""));
