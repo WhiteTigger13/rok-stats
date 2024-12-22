@@ -71,11 +71,17 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(err => console.error("Error loading dataset:", err));
     }
 
+let sortDirection = 1; // 1 for ascending, -1 for descending
+
 function renderTable(headers, rows) {
     tableHeaders.innerHTML = "";
-    headers.forEach(header => {
+    headers.forEach((header, index) => {
         const th = document.createElement("th");
         th.textContent = header;
+        th.style.cursor = "pointer"; // Make headers look clickable
+        th.addEventListener("click", () => {
+            sortTableByColumn(index); // Add sorting functionality
+        });
         tableHeaders.appendChild(th);
     });
 
@@ -84,11 +90,10 @@ function renderTable(headers, rows) {
         const tr = document.createElement("tr");
         row.forEach((cell, index) => {
             const td = document.createElement("td");
-            // Skip formatting for the first two columns
             if (index > 1) {
                 td.textContent = formatNumberIfNeeded(cell.trim());
             } else {
-                td.textContent = cell.trim(); // Leave the first two columns as-is
+                td.textContent = cell.trim();
             }
             tr.appendChild(td);
         });
@@ -96,21 +101,43 @@ function renderTable(headers, rows) {
     });
 }
 
-// Helper function to format numbers with thousand separators
-function formatNumberIfNeeded(value) {
-    // Attempt to parse the value as a number
-    const numericValue = Number(value.replace(/[(),]/g, "")); // Remove brackets and commas for parsing
-    if (!isNaN(numericValue)) {
-        if (numericValue < 0) {
-            // Format negative numbers with parentheses
-            return `(${Math.abs(numericValue).toLocaleString("en-US")})`;
+// Function to sort table by a specific column index
+function sortTableByColumn(columnIndex) {
+    // Sort tableData in place
+    tableData.sort((a, b) => {
+        const valA = a[columnIndex].replace(/[(),]/g, ""); // Remove formatting
+        const valB = b[columnIndex].replace(/[(),]/g, ""); // Remove formatting
+
+        const numA = parseFloat(valA);
+        const numB = parseFloat(valB);
+
+        // Sort numeric values if they are numbers
+        if (!isNaN(numA) && !isNaN(numB)) {
+            return sortDirection * (numA - numB);
         }
-        // Format positive numbers with thousand separators
-        return numericValue.toLocaleString("en-US"); // Change "en-US" to "de-DE" for dots
-    }
-    return value; // Return original value if it's not numeric
+
+        // Otherwise, sort alphabetically
+        return sortDirection * valA.localeCompare(valB);
+    });
+
+    // Toggle sort direction for the next click
+    sortDirection *= -1;
+
+    // Re-render the table with the sorted data
+    renderTable(currentHeaders, tableData);
 }
 
+// Helper function to format numbers with thousand separators
+function formatNumberIfNeeded(value) {
+    const numericValue = Number(value.replace(/[(),]/g, ""));
+    if (!isNaN(numericValue)) {
+        if (numericValue < 0) {
+            return `(${Math.abs(numericValue).toLocaleString("en-US")})`;
+        }
+        return numericValue.toLocaleString("en-US");
+    }
+    return value;
+}
 
 
     fetchAvailableFiles();
