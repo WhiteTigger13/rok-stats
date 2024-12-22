@@ -54,12 +54,16 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.text())
             .then(csvText => {
                 const rows = csvText.trim().split(/\r?\n/).map(row => row.split(","));
-                currentHeaders = rows.shift().map(header => header.trim()); // Trim headers
-                tableData = rows.filter(row => row.length === currentHeaders.length).map(row => row.map(cell => cell.trim())); // Filter valid rows
-                console.log("Table Data:", tableData); // Debugging
-                console.log("Current Headers:", currentHeaders); // Debugging
-                renderTable(currentHeaders, tableData); // Render the table with all data
-                aggregateGovernorStats(rows); // Aggregate data for stats differences
+                if (rows.length > 0) {
+                    currentHeaders = rows.shift().map(header => header.trim());
+                    tableData = rows.filter(row => row.length === currentHeaders.length).map(row => row.map(cell => cell.trim()));
+                    console.log("CSV Headers:", currentHeaders); // Debugging
+                    console.log("CSV Data:", tableData); // Debugging
+                    renderTable(currentHeaders, tableData); // Render the table with all data
+                    aggregateGovernorStats(rows); // Aggregate data for stats differences
+                } else {
+                    console.error("No data found in the CSV file.");
+                }
             })
             .catch(err => console.error("Error loading dataset:", err));
     }
@@ -91,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
             th.textContent = header.trim();
             tableHeaders.appendChild(th);
         });
+        console.log("Table Headers Element:", tableHeaders.innerHTML); // Debugging
     }
 
     // Render table body with optional highlighting and formatting
@@ -117,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             tableBody.appendChild(tr);
         });
+        console.log("Table Body Element:", tableBody.innerHTML); // Debugging
     }
 
     // Aggregate data for governor stats dynamically
