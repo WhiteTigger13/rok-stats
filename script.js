@@ -71,25 +71,35 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(err => console.error("Error loading dataset:", err));
     }
 
-    function renderTable(headers, rows) {
-        tableHeaders.innerHTML = "";
-        headers.forEach(header => {
-            const th = document.createElement("th");
-            th.textContent = header;
-            tableHeaders.appendChild(th);
-        });
+   function renderTable(headers, rows) {
+    tableHeaders.innerHTML = "";
+    headers.forEach(header => {
+        const th = document.createElement("th");
+        th.textContent = header;
+        tableHeaders.appendChild(th);
+    });
 
-        tableBody.innerHTML = "";
-        rows.forEach(row => {
-            const tr = document.createElement("tr");
-            row.forEach(cell => {
-                const td = document.createElement("td");
-                td.textContent = cell;
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
+    tableBody.innerHTML = "";
+    rows.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach(cell => {
+            const td = document.createElement("td");
+            td.textContent = formatNumberIfNeeded(cell.trim());
+            tr.appendChild(td);
         });
+        tableBody.appendChild(tr);
+    });
+}
+
+// Helper function to format numbers with thousand separators
+function formatNumberIfNeeded(value) {
+    // Check if the value is a valid number
+    if (!isNaN(value) && value !== "") {
+        return Number(value).toLocaleString("en-US"); // Change "en-US" to "de-DE" for dots instead of commas
     }
+    return value; // Return original value if it's not numeric
+}
+
 
     fetchAvailableFiles();
 });
