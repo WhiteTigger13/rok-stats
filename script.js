@@ -99,26 +99,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function sortTableByColumn(columnIndex) {
-        console.log(`Sorting column ${columnIndex}`);
+  function sortTableByColumn(columnIndex) {
+    console.log(`Sorting column ${columnIndex} in ${sortDirection === 1 ? "ascending" : "descending"} order.`);
 
-        tableData.sort((a, b) => {
-            const valA = a[columnIndex].replace(/[(),]/g, ""); // Remove formatting for comparison
-            const valB = b[columnIndex].replace(/[(),]/g, "");
+    tableData.sort((a, b) => {
+        const valA = a[columnIndex].replace(/[(),]/g, ""); // Remove formatting for comparison
+        const valB = b[columnIndex].replace(/[(),]/g, "");
 
-            const numA = parseFloat(valA);
-            const numB = parseFloat(valB);
+        const numA = parseFloat(valA);
+        const numB = parseFloat(valB);
 
-            if (!isNaN(numA) && !isNaN(numB)) {
-                return sortDirection * (numA - numB);
-            }
-            return sortDirection * valA.localeCompare(valB);
-        });
+        if (!isNaN(numA) && !isNaN(numB)) {
+            return sortDirection * (numA - numB);
+        }
+        return sortDirection * valA.localeCompare(valB);
+    });
 
-        sortDirection *= -1; // Toggle sort direction
-
-        renderTable(currentHeaders, tableData); // Re-render the table
-    }
+    sortDirection *= -1; // Toggle sort direction
+    renderTable(currentHeaders, tableData); // Re-render the table
+    console.log("Table sorted and re-rendered.");
+}
 
     function formatNumberIfNeeded(value) {
         const numericValue = Number(value.replace(/[(),]/g, ""));
